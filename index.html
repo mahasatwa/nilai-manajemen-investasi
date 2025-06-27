@@ -3,126 +3,111 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dasbor Interaktif Penilaian Mahasiswa</title>
+    <title>Dasbor Nilai - Edisi Memphis RPG</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Chart.js untuk Grafik -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- GSAP (GreenSock Animation Platform) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Poppins:wght@700;900&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --bg-color: #f0f0f0;
+            --text-color: #1a1a1a;
+            --border-color: #1a1a1a;
+            --neon-pink: #FF2D70;
+            --electric-blue: #00F0FF;
+            --lemon-yellow: #FFE600;
+        }
+
         body {
-            font-family: 'Inter', sans-serif;
-            scroll-behavior: smooth;
-            background-color: #f3f4f6;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 700;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            overflow-x: hidden;
         }
-        /* Gradasi warna untuk kartu peringkat teratas */
-        .card-gradient-gold { background: linear-gradient(135deg, #fef9c3, #fde047, #facc15); }
-        .card-gradient-silver { background: linear-gradient(135deg, #f9fafb, #e5e7eb, #d1d5db); }
-        .card-gradient-bronze { background: linear-gradient(135deg, #ffedd5, #fbbf24, #d97706); }
-        
-        /* Gaya untuk input pencarian */
-        #searchInput:focus, #sortSelect:focus {
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
-            border-color: #3b82f6;
+        .pixel-font { font-family: 'Press Start 2P', cursive; }
+        .solid-shadow {
+            border: 3px solid var(--border-color);
+            box-shadow: 8px 8px 0px var(--border-color);
+            transition: all 0.2s ease-out;
         }
-
-        /* Gaya untuk tombol filter nilai yang aktif */
-        .filter-btn-active {
-            background-color: #2563eb;
-            color: #ffffff;
-            font-weight: 600;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        .card-hover:hover {
+            transform: translateY(-6px) scale(1.02);
+            box-shadow: 12px 12px 0px var(--border-color);
         }
 
-        /* Animasi untuk modal */
-        .modal-enter { opacity: 0; transform: scale(0.95) translateY(10px); }
-        .modal-enter-active { opacity: 1; transform: scale(1) translateY(0); transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1); }
-        .modal-leave { opacity: 1; transform: scale(1) translateY(0); }
-        .modal-leave-active { opacity: 0; transform: scale(0.95) translateY(10px); transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1); }
+        /* Gradien Peringkat */
+        .rank-1-card { background: linear-gradient(45deg, var(--lemon-yellow), var(--neon-pink)); }
+        .rank-2-card { background: linear-gradient(45deg, #e0e0e0, #b0b0b0); }
+        .rank-3-card { background: linear-gradient(45deg, #D2691E, #A0522D); }
+
+        /* Medali Animasi */
+        .medal-container { perspective: 1000px; }
+        .medal { width: 48px; height: 48px; position: relative; transform-style: preserve-3d; }
+        .medal-face { position: absolute; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 24px; backface-visibility: hidden; border-radius: 50%; box-shadow: inset 0 -4px 6px rgba(0,0,0,0.2); border: 2px solid rgba(255,255,255,0.5); }
+        .medal-front { transform: translateZ(3px); }
+        .medal-back { transform: rotateY(180deg) translateZ(3px); }
         
-        /* Animasi staggered untuk kartu */
-        .card-item {
+        .rank-1 .medal { animation: spin 8s linear infinite, glow 1.6s ease-in-out infinite; }
+        .rank-2 .medal { animation: bounce 2s ease-in-out infinite; }
+        .rank-3 .medal { animation: tilt 3s ease-in-out infinite; }
+        
+        .gold-medal { background: radial-gradient(ellipse at center, #fffbeb, #ffd54f); color: #a56c00; }
+        .silver-medal { background: radial-gradient(ellipse at center, #f5f5f5, #bdbdbd); color: #555; }
+        .bronze-medal { background: radial-gradient(ellipse at center, #f0e6d6, #cd7f32); color: #6e3c09; }
+
+        @keyframes spin { from { transform: rotateY(0deg); } to { transform: rotateY(360deg); } }
+        @keyframes glow { 0%, 100% { box-shadow: 0 0 15px var(--lemon-yellow), 0 0 25px var(--lemon-yellow); } 50% { box-shadow: 0 0 25px var(--lemon-yellow), 0 0 50px var(--lemon-yellow); } }
+        @keyframes bounce { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+        @keyframes tilt { 0%, 100% { transform: rotateZ(0); } 25% { transform: rotateZ(-5deg); } 75% { transform: rotateZ(5deg); } }
+        
+        .card-enter {
             opacity: 0;
-            transform: translateY(20px);
-            animation: card-fade-in 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+            transform: translateY(30px);
+            transition: opacity 0.5s ease-out, transform 0.5s ease-out;
         }
-        @keyframes card-fade-in {
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        .card-enter-active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        /* Modal Animation */
+        #student-modal.show {
+            opacity: 1 !important;
+            pointer-events: auto !important;
+        }
+        #student-modal.show #modal-content {
+            transform: scale(1) !important;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .medal, .card-hover:hover, .healthbar-anim, #background-canvas { animation: none !important; display: none; }
         }
     </style>
 </head>
-<body class="text-gray-800">
+<body class="text-base">
+    <canvas id="background-canvas" class="fixed top-0 left-0 w-full h-full -z-10 opacity-50"></canvas>
 
-    <div class="container mx-auto p-4 sm:p-6 lg:p-8">
-        <header class="text-center mb-10">
-            <h1 class="text-4xl sm:text-5xl font-extrabold text-gray-900 tracking-tight">Dasbor Penilaian Mahasiswa</h1>
-            <p class="mt-3 text-lg text-gray-600 max-w-2xl mx-auto">Analisis, Visualisasi, dan Peringkat Kinerja Mahasiswa secara Interaktif.</p>
+    <div class="container mx-auto p-4 sm:p-6">
+        <header class="text-center mb-10 p-6 rounded-2xl solid-shadow bg-white relative overflow-hidden">
+             <div class="absolute -top-10 -left-10 w-32 h-32 bg-neon-pink rounded-full opacity-80"></div>
+             <div class="absolute -bottom-12 -right-8 w-24 h-24 border-8 border-electric-blue rotate-45"></div>
+            <h1 class="text-4xl sm:text-5xl font-black text-gray-800 tracking-tight z-10 relative">Nilai Presentasi</h1>
+            <p class="mt-2 text-xl text-gray-500 pixel-font z-10 relative">Manajemen Investasi & Pasar Modal</p>
         </header>
 
-        <!-- Ringkasan & Visualisasi -->
-        <section class="mb-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div class="lg:col-span-1 bg-white p-6 rounded-xl shadow-lg border border-gray-200">
-                <h2 class="text-xl font-bold mb-4 text-gray-800">Ringkasan Statistik</h2>
-                <div class="space-y-4">
-                    <div class="flex justify-between items-center bg-gray-50 p-3 rounded-lg"><span class="text-gray-600 font-medium">Total Mahasiswa</span><span id="total-students" class="font-bold text-lg text-blue-600">0</span></div>
-                    <div class="flex justify-between items-center bg-gray-50 p-3 rounded-lg"><span class="text-gray-600 font-medium">Rata-rata Nilai</span><span id="average-score" class="font-bold text-lg text-green-600">0.00</span></div>
-                    <div class="flex justify-between items-center bg-gray-50 p-3 rounded-lg"><span class="text-gray-600 font-medium">Nilai Tertinggi</span><span id="highest-score" class="font-bold text-lg text-amber-600">0.00</span></div>
-                    <div class="flex justify-between items-center bg-gray-50 p-3 rounded-lg"><span class="text-gray-600 font-medium">Nilai Terendah</span><span id="lowest-score" class="font-bold text-lg text-red-600">0.00</span></div>
-                </div>
-            </div>
-            <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-lg border border-gray-200">
-                <h2 class="text-xl font-bold mb-4 text-gray-800">Distribusi Nilai Huruf</h2>
-                <div class="relative h-56 md:h-64"><canvas id="grade-chart"></canvas></div>
-            </div>
-        </section>
-
-        <!-- Kontrol Pencarian, Filter, dan Pengurutan -->
-        <div class="mb-8 p-4 bg-white rounded-xl shadow-lg border border-gray-200 sticky top-4 z-20">
-            <div class="grid grid-cols-1 md:grid-cols-5 gap-4 items-center">
-                 <div class="relative md:col-span-2">
-                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" /></svg></div>
-                    <input type="text" id="searchInput" placeholder="Cari nama atau NIM..." class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none transition">
-                </div>
-                <div class="md:col-span-2"><div id="grade-filters" class="flex items-center gap-2 flex-wrap"></div></div>
-                <div class="md:col-span-1">
-                    <select id="sortSelect" class="w-full px-4 py-2 border border-gray-300 rounded-md bg-white focus:outline-none transition">
-                        <option value="rank">Urutkan: Peringkat</option>
-                        <option value="name-asc">Urutkan: Nama (A-Z)</option>
-                        <option value="name-desc">Urutkan: Nama (Z-A)</option>
-                        <option value="score-desc">Urutkan: Nilai Tertinggi</option>
-                        <option value="score-asc">Urutkan: Nilai Terendah</option>
-                    </select>
-                </div>
-            </div>
-        </div>
-
-        <main id="leaderboard" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></main>
-        
-        <div id="no-results" class="text-center p-16 col-span-full hidden rounded-lg bg-gray-100">
-            <p class="text-2xl font-semibold text-gray-700">Hasil tidak ditemukan</p>
-            <p class="text-gray-500 mt-2">Coba sesuaikan filter atau kata kunci pencarian Anda.</p>
-        </div>
-
-        <footer class="text-center mt-12 text-sm text-gray-500"><p>&copy; 2025 Dasbor Penilaian Mahasiswa. Dibuat secara dinamis.</p></footer>
+        <main id="leaderboard" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8"></main>
     </div>
 
-    <!-- Modal untuk Detail Mahasiswa -->
-    <!-- PERBAIKAN: Menambahkan `overflow-y-auto` untuk scrolling dan `max-h-screen` untuk membatasi tinggi -->
-    <div id="student-modal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50 hidden modal-leave overflow-y-auto" onclick="closeModal()">
-        <!-- PERBAIKAN: Menghapus `onclick` dari sini agar klik di konten tidak menutup modal -->
-        <div id="modal-content-wrapper" class="w-full max-w-lg mx-auto my-8 max-h-[80vh] overflow-y-auto">
-             <div id="modal-content" class="bg-gray-100 rounded-2xl shadow-2xl transform transition-all" onclick="event.stopPropagation()">
-                <!-- Konten modal akan diisi oleh Javascript -->
-            </div>
+    <div id="student-modal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50 opacity-0 pointer-events-none transition-opacity duration-300" onclick="closeModal()">
+        <div id="modal-content-wrapper" class="w-full max-w-2xl mx-auto" onclick="event.stopPropagation()">
+             <div id="modal-content" class="bg-white rounded-2xl solid-shadow flex flex-col max-h-[90vh] text-gray-800 transform scale-95 transition-all duration-300"></div>
         </div>
     </div>
 
     <script>
-        // --- DATA MENTAH (DIPERBARUI) ---
         const studentRawData = `Rangga Adriansyah 	2131232005	4.6	4.7	6.9	5	20	92	94	69	100	71.9	B
 Upi Lutfiah 	2231231961	5	5	8.3	5	0	100	100	83	100	98.3	A
 Roup Adifurohim	2131231989	4.8	4	3	3	0	96	80	30	60	77.4	AB
@@ -143,268 +128,185 @@ Nida Maulida	2231231967	4.3	4.3	9.5	3.7	0	86	86	95	74	84.5	AB
 Vadila Vatriatun Nada 	2231231947	4.6	3.9	7.8	3	0	92	78	78	60	80	AB
 M. Ilham Arifin	2131231966	4.6	4.4	7.8	3	0	92	88	78	60	83	AB`;
 
-        // --- Variabel Global & Elemen DOM ---
-        let allStudentData = [];
-        let filters = { searchTerm: '', grade: 'All', sortBy: 'rank' };
-        let gradeChart = null;
-
-        const leaderboardContainer = document.getElementById('leaderboard');
-        const searchInput = document.getElementById('searchInput');
-        const sortSelect = document.getElementById('sortSelect');
-        const gradeFiltersContainer = document.getElementById('grade-filters');
-        const noResultsDiv = document.getElementById('no-results');
+        let allStudentData = [], currentStudentIndex = 0, visibleStudents = [];
+        
+        const leaderboard = document.getElementById('leaderboard');
         const studentModal = document.getElementById('student-modal');
         const modalContent = document.getElementById('modal-content');
 
-        // --- Fungsi Bantuan ---
-        const getInitials = (name) => (name.match(/\b\w/g) || []).join('').toUpperCase();
-        const capitalize = (s) => s.toLowerCase().replace(/\b./g, c => c.toUpperCase());
-
-        function getGradeBadgeClasses(grade) {
-            const colors = {
-                'A':  'bg-amber-100 text-amber-800 border-amber-400',  // Gold
-                'AB': 'bg-lime-100 text-lime-800 border-lime-400',
-                'B':  'bg-green-100 text-green-800 border-green-400',
-                'BC': 'bg-teal-100 text-teal-800 border-teal-400',
-                'C':  'bg-sky-100 text-sky-800 border-sky-400',
-                'D':  'bg-orange-100 text-orange-800 border-orange-400',
-                'E':  'bg-red-100 text-red-800 border-red-400',        // Red
-                'default': 'bg-gray-100 text-gray-800 border-gray-300'
-            };
-            return colors[grade] || colors['default'];
-        }
+        const getGradeInfo = (grade) => {
+            const styles = {'A':'#2ecc71','AB':'#27ae60','B':'#16a085','BC':'#3498db','C':'#9b59b6','D':'#e67e22','E':'#e74c3c','default':'#95a5a6'};
+            return styles[grade] || styles['default'];
+        };
+        const getHealthbarColor = (val) => val >= 80 ? 'linear-gradient(90deg, #2ecc71, #8effa8)' : val >= 60 ? 'linear-gradient(90deg, #f1c40f, #f9e79f)' : val >= 40 ? 'linear-gradient(90deg, #e67e22, #f5cba7)' : 'linear-gradient(90deg, #e74c3c, #f5b7b1)';
         
-        // --- Fungsi Utama ---
-        function parseAndProcessData() {
-            const rows = studentRawData.trim().split('\n');
-            const parsedData = rows.map(row => {
+        function parseData() {
+            allStudentData = studentRawData.trim().split('\n').map(row => {
                 const cols = row.split('\t').map(c => c.trim());
-                const toFloatOrNull = (val) => (val && !isNaN(parseFloat(val))) ? parseFloat(val) : null;
-                
-                const name = capitalize(cols[0] || "Tanpa Nama");
-                const nim = cols[1] || "Tanpa NIM";
-                
-                return {
-                    name,
-                    nim,
-                    photoUrl: `./${nim}.jpg`,
-                    scores: {
-                        "Konten": toFloatOrNull(cols[2]), "Delivery": toFloatOrNull(cols[3]),
-                        "Waktu": toFloatOrNull(cols[4]), "Tanya Jawab": toFloatOrNull(cols[5]),
-                        "Kepatuhan": toFloatOrNull(cols[6]), "N-Pres": toFloatOrNull(cols[7]),
-                        "N-Deliv": toFloatOrNull(cols[8]), "N-Waktu": toFloatOrNull(cols[9]),
-                        "N-Materi": toFloatOrNull(cols[10]),
-                    },
-                    finalScore: toFloatOrNull(cols[11]),
-                    letterGrade: cols[12] || "N/A",
-                    personalNote: "Mahasiswa menunjukkan partisipasi aktif selama periode penilaian. Perlu peningkatan pada manajemen waktu presentasi."
+                const nim = cols[1] || "000";
+                return { name: cols[0], nim, photoUrl: `./${nim}.jpg`,
+                    scores: { "Konten": parseFloat(cols[2]), "Delivery": parseFloat(cols[3]), "Waktu": parseFloat(cols[4])*10, "TanyaJawab": parseFloat(cols[5]), "Kepatuhan": parseFloat(cols[6] || 0) },
+                    finalScore: parseFloat(cols[11]), letterGrade: cols[12]
                 };
-            }).filter(s => s.finalScore !== null);
-
-            const sortedByScore = [...parsedData].sort((a, b) => b.finalScore - a.finalScore);
-            allStudentData = parsedData.map(student => ({
-                ...student,
-                rank: sortedByScore.findIndex(s => s.nim === student.nim) + 1
-            }));
+            }).sort((a,b) => b.finalScore - a.finalScore).map((s,i) => ({...s, rank: i+1}));
         }
 
-        function displayLeaderboard(students) {
-            leaderboardContainer.innerHTML = '';
-            noResultsDiv.classList.toggle('hidden', students.length > 0);
-            
-            students.forEach((student, index) => {
-                let cardBgClass = 'bg-white hover:bg-gray-50';
+        function displayLeaderboard() {
+            visibleStudents = allStudentData;
+            leaderboard.innerHTML = visibleStudents.map((s, i) => {
+                const gradeColor = getGradeInfo(s.letterGrade);
+                let cardClass = 'bg-white';
                 let textColor = 'text-gray-800';
-                const isRankSort = filters.sortBy === 'rank';
+                if(s.rank === 1) { cardClass = 'rank-1-card'; textColor = 'text-black'; }
+                else if(s.rank === 2) { cardClass = 'rank-2-card'; textColor = 'text-black'; }
+                else if(s.rank === 3) { cardClass = 'rank-3-card'; textColor = 'text-white'; }
                 
-                if (isRankSort && index < 3) {
-                    if (index === 0) { cardBgClass = 'card-gradient-gold'; textColor = 'text-yellow-900'; }
-                    else if (index === 1) { cardBgClass = 'card-gradient-silver'; textColor = 'text-gray-900'; }
-                    else if (index === 2) { cardBgClass = 'card-gradient-bronze'; textColor = 'text-orange-900'; }
+                let medalHtml = '';
+                if(s.rank <= 3) {
+                    const medalType = s.rank === 1 ? 'gold' : s.rank === 2 ? 'silver' : 'bronze';
+                    medalHtml = `<div class="medal-container"><div class="rank-${s.rank} medal"><div class="medal-face medal-front ${medalType}-medal pixel-font">${s.rank}</div><div class="medal-face medal-back ${medalType}-medal"></div></div></div>`;
+                } else {
+                    medalHtml = `<div class="w-12 h-12 flex items-center justify-center bg-gray-200 text-gray-700 font-black text-2xl rounded-full border-2 border-black">${s.rank}</div>`;
                 }
                 
-                const card = document.createElement('div');
-                card.className = `card-item transform hover:-translate-y-1.5 transition-all duration-300 ease-in-out ${cardBgClass} rounded-xl shadow-lg overflow-hidden border border-gray-200 cursor-pointer`;
-                card.style.animationDelay = `${index * 50}ms`;
-                card.innerHTML = `
-                    <div class="p-5 ${textColor}">
-                        <div class="flex justify-between items-start mb-4">
-                             <div class="font-bold text-2xl opacity-70">#${student.rank}</div>
-                             <div class="text-xs font-semibold px-2 py-1 rounded-full inline-block ${getGradeBadgeClasses(student.letterGrade)} border">
-                                <strong>${student.letterGrade}</strong>
-                             </div>
+                return `
+                    <div class="rounded-2xl p-4 solid-shadow card-hover cursor-pointer ${cardClass} ${textColor} card-enter" onclick="openModal('${s.nim}')" style="transition-delay: ${i * 50}ms">
+                         <div class="flex items-start justify-between mb-4">
+                            ${medalHtml}
+                            <div class="pixel-font text-2xl font-bold px-3 py-1 rounded-md" style="background-color: ${gradeColor}20; color: ${gradeColor}; border: 2px solid ${gradeColor}80;">${s.letterGrade}</div>
                         </div>
                         <div class="flex items-center gap-4">
-                            <img src="${student.photoUrl}" onerror="this.onerror=null;this.src='https://placehold.co/400x400/EBF4FF/76A9EA?text=${getInitials(student.name)}';" alt="Foto ${student.name}" class="w-16 h-16 rounded-full object-cover border-4 border-white/50 shadow-md flex-shrink-0 bg-gray-200">
-                            <div class="flex-grow min-w-0">
-                                <h3 class="font-bold text-lg truncate" title="${student.name}">${student.name}</h3>
-                                <p class="text-sm opacity-90">NIM: ${student.nim}</p>
+                            <div class="p-1 bg-white solid-shadow !shadow-none"><img loading="lazy" src="${s.photoUrl}" onerror="this.onerror=null;this.src='https://placehold.co/400x400/1a1a1a/ffffff?text=${s.name.match(/\b\w/g).join('')}';" class="w-24 h-24 object-cover border-2 border-black"></div>
+                            <div class="min-w-0">
+                                <h3 class="text-xl font-black truncate">${s.name}</h3>
+                                <p class="text-sm opacity-70 font-mono">NIM: ${s.nim}</p>
                             </div>
                         </div>
-                        <div class="mt-4 pt-4 border-t border-current border-opacity-20 text-right">
-                            <p class="text-sm font-medium opacity-80">Nilai Akhir</p>
-                            <p class="font-extrabold text-4xl">${student.finalScore.toFixed(2)}</p>
+                        <div class="flex items-center gap-2 mt-4">
+                            <div class="w-full bg-black/10 rounded-full h-5 solid-shadow !shadow-none !border-2 p-0.5"><div class="h-full rounded-full" style="width:${s.finalScore}%; background-color:${gradeColor};"></div></div>
+                            <div class="font-bold text-lg pixel-font">${s.finalScore.toFixed(1)}</div>
                         </div>
-                    </div>
-                `;
-                card.addEventListener('click', () => openModal(student.nim));
-                leaderboardContainer.appendChild(card);
+                    </div>`;
+            }).join('');
+            requestAnimationFrame(() => {
+                document.querySelectorAll('.card-enter').forEach(card => card.classList.add('card-enter-active'));
             });
         }
         
-        function calculateSummaryAndRenderChart() {
-            const totalStudents = allStudentData.length;
-            const totalScore = allStudentData.reduce((sum, s) => sum + s.finalScore, 0);
-            const averageScore = totalStudents > 0 ? (totalScore / totalStudents) : 0;
-            const scores = allStudentData.map(s => s.finalScore);
-            const highestScore = totalStudents > 0 ? Math.max(...scores) : 0;
-            const lowestScore = totalStudents > 0 ? Math.min(...scores) : 0;
-
-            document.getElementById('total-students').textContent = totalStudents;
-            document.getElementById('average-score').textContent = averageScore.toFixed(2);
-            document.getElementById('highest-score').textContent = highestScore.toFixed(2);
-            document.getElementById('lowest-score').textContent = lowestScore.toFixed(2);
-
-            const gradeCounts = allStudentData.reduce((acc, student) => {
-                acc[student.letterGrade] = (acc[student.letterGrade] || 0) + 1;
-                return acc;
-            }, {});
-
-            const gradeOrder = ['A', 'AB', 'B', 'BC', 'C', 'D', 'E'];
-            const sortedGrades = Object.keys(gradeCounts).sort((a, b) => gradeOrder.indexOf(a) - gradeOrder.indexOf(b));
-            
-            renderChart(sortedGrades, sortedGrades.map(grade => gradeCounts[grade]));
-            renderGradeFilters(sortedGrades);
-        }
-        
-        function renderChart(labels, data) {
-            const ctx = document.getElementById('grade-chart').getContext('2d');
-            if (gradeChart) gradeChart.destroy();
-            const backgroundColors = labels.map(label => getGradeBadgeClasses(label).split(' ')[0].replace('bg-', 'bg-') .replace('-100', '-300'));
-            gradeChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Jumlah Mahasiswa', data: data,
-                        backgroundColor: backgroundColors.map(c => c.replace('border-', 'bg-')),
-                        borderColor: backgroundColors.map(c => c.replace('bg-', 'border-')),
-                        borderWidth: 1, borderRadius: 5, hoverBackgroundColor: backgroundColors.map(c => c.replace('bg-', 'bg-').replace('-100', '-400'))
-                    }]
-                },
-                options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }, plugins: { legend: { display: false } } }
-            });
-        }
-        
-        function renderGradeFilters(grades) {
-            gradeFiltersContainer.innerHTML = ['All', ...grades].map(grade => `
-                <button data-grade="${grade}" class="grade-filter-btn px-3 py-1 text-sm rounded-md transition-all duration-200 ${grade === 'All' ? 'filter-btn-active' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}">${grade}</button>
-            `).join('');
-        }
-
-        function updateView() {
-            let filteredData = allStudentData.filter(student => 
-                (student.name.toLowerCase().includes(filters.searchTerm) || student.nim.includes(filters.searchTerm)) &&
-                (filters.grade === 'All' || student.letterGrade === filters.grade)
-            );
-            switch (filters.sortBy) {
-                case 'name-asc': filteredData.sort((a, b) => a.name.localeCompare(b.name)); break;
-                case 'name-desc': filteredData.sort((a, b) => b.name.localeCompare(a.name)); break;
-                case 'score-asc': filteredData.sort((a, b) => a.finalScore - b.finalScore); break;
-                case 'score-desc': filteredData.sort((a, b) => b.finalScore - a.finalScore); break;
-                case 'rank': default: filteredData.sort((a, b) => a.rank - b.rank); break;
-            }
-            displayLeaderboard(filteredData);
-        }
-
         function openModal(nim) {
-            const student = allStudentData.find(s => s.nim === nim);
-            if (!student) return;
+            currentStudentIndex = visibleStudents.findIndex(s => s.nim === nim);
+            const s = visibleStudents[currentStudentIndex];
+            if (!s) return;
 
-            // PERBAIKAN: Konten modal sekarang di-render di dalam #modal-content
+            const gradeColor = getGradeInfo(s.letterGrade);
+            const playerTitle = `Lv.${Math.floor(s.finalScore)} Scholar`;
+            
+            const healthbarHtml = Object.entries(s.scores).map(([key, value]) => {
+                const isNegative = key === 'Kepatuhan';
+                const isMaxFive = ["Konten", "Delivery", "TanyaJawab"].includes(key);
+                const valPercentage = isMaxFive ? (value / 5) * 100 : (key === 'Waktu' ? value : Math.min(value, 20) * 5);
+                const barColor = isNegative ? getGradeInfo('E') : getHealthbarColor(valPercentage);
+                return `<div class="grid grid-cols-3 gap-2 items-center healthbar-item opacity-0 transform translate-y-4"><div class="font-bold text-gray-700 pixel-font text-sm">${key} ${isNegative && value > 0 ? '⚠️':''}</div><div class="col-span-2 bg-gray-200 rounded-sm solid-shadow !shadow-none h-6 p-0.5"><div class="rounded-sm h-full flex items-center justify-end pr-2 text-black font-bold text-xs" style="width:0%; background-image:${barColor};" data-width="${valPercentage}%">${isNegative ? `-${value}` : value.toFixed(1)}</div></div></div>`;
+            }).join('');
+            
+            const achievements = [];
+            if(s.rank === 1) achievements.push("🥇 Top of the Class");
+            if(s.scores.Waktu >= 90) achievements.push("⏱️ Time Management Expert");
+            if(s.scores.TanyaJawab === 5) achievements.push("🎙️ Master Debater");
+            if(s.finalScore > 95) achievements.push("⭐ S-Rank Performance");
+            
             modalContent.innerHTML = `
-                <div class="relative">
-                    <div class="w-full h-28 ${getGradeBadgeClasses(student.letterGrade).split(' ')[0].replace('-100', '-200')} rounded-t-2xl"></div>
-                    <div class="absolute top-8 left-1/2 -translate-x-1/2">
-                        <img src="${student.photoUrl}" onerror="this.onerror=null;this.src='https://placehold.co/400x400/EBF4FF/76A9EA?text=${getInitials(student.name)}';" alt="Foto ${student.name}" class="w-28 h-28 rounded-full object-cover border-4 border-gray-100 shadow-lg bg-gray-300">
+                <div class="flex-shrink-0 p-4 relative border-b-4 border-black" style="background:linear-gradient(45deg, ${gradeColor}20, ${gradeColor}05);">
+                    <button onclick="closeModal()" class="absolute top-2 right-2 text-gray-500 hover:text-red-500 transition p-1"><svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"></path></svg></button>
+                    <div class="text-center">
+                        <div class="inline-block p-1 bg-white solid-shadow !shadow-none rounded-full"><img src="${s.photoUrl}" onerror="this.onerror=null;this.src='https://placehold.co/400x400/1a1a1a/ffffff?text=${s.name.match(/\b\w/g).join('')}';" class="w-24 h-24 rounded-full object-cover border-2 border-black"></div>
+                        <h2 class="text-3xl font-black text-gray-800 mt-2">${s.name}</h2>
+                        <p class="pixel-font text-gray-500 text-sm">${playerTitle} // NIM: ${s.nim}</p>
                     </div>
                 </div>
-                <div class="p-6 sm:p-8 pt-20 text-center">
-                    <h2 class="text-2xl font-bold text-gray-900">${student.name}</h2>
-                    <p class="text-sm text-gray-500">NIM: ${student.nim}</p>
-                    <div class="mt-4 inline-flex flex-wrap justify-center items-center gap-4 rounded-lg p-4 bg-white border">
-                        <div>
-                           <p class="text-sm text-gray-600 font-medium">Peringkat</p>
-                           <p class="text-3xl font-bold text-blue-600">#${student.rank}</p>
-                        </div>
-                        <div class="border-l h-10 border-gray-200"></div>
-                        <div class="text-right">
-                           <p class="text-sm text-gray-600 font-medium">Nilai Akhir</p>
-                           <p class="text-3xl font-bold text-blue-600">${student.finalScore.toFixed(2)}</p>
-                        </div>
-                         <div class="border-l h-10 border-gray-200"></div>
-                         <div class="text-right">
-                           <p class="text-sm text-gray-600 font-medium">Nilai Huruf</p>
-                           <div class="text-3xl font-bold px-3 py-1 mt-1 rounded-lg inline-block ${getGradeBadgeClasses(student.letterGrade)} border">
-                                ${student.letterGrade}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="px-6 sm:px-8 pb-8 space-y-6">
+                <div class="p-6 space-y-6 overflow-y-auto flex-grow">
                     <div>
-                        <h3 class="text-lg font-semibold mb-3 text-gray-700 text-center">Rincian Komponen Nilai</h3>
-                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 text-center bg-white p-4 rounded-lg border">
-                            ${Object.entries(student.scores).map(([key, value]) => `
-                                <div class="bg-gray-50 p-3 rounded-lg border">
-                                    <p class="text-xs font-medium text-gray-500 uppercase">${key}</p>
-                                    <p class="text-xl font-semibold text-gray-800">${value !== null ? value : '-'}</p>
-                                </div>
-                            `).join('')}
-                        </div>
+                        <h3 class="font-bold text-xl text-center mb-4 pixel-font">SKILLSET</h3>
+                        <div class="space-y-3">${healthbarHtml}</div>
                     </div>
-                    <div>
-                        <h3 class="text-lg font-semibold mb-3 text-gray-700 text-center">Catatan Personal Penilai</h3>
-                        <div class="bg-white p-4 rounded-lg border text-gray-600 text-sm italic">
-                           "${student.personalNote || 'Tidak ada catatan.'}"
-                        </div>
-                    </div>
+                    ${achievements.length > 0 ? `<div class="achievement-item opacity-0 transform translate-y-4"><h3 class="font-bold text-xl text-center mb-2 pixel-font">ACHIEVEMENTS</h3><div class="flex flex-wrap gap-2 justify-center">${achievements.map(a => `<span class="bg-yellow-100 text-yellow-800 font-semibold px-3 py-1 rounded-full text-sm border-2 border-yellow-300">${a}</span>`).join('')}</div></div>` : ''}
                 </div>
             `;
+            
             studentModal.classList.remove('hidden');
-            // Menerapkan animasi pada elemen pembungkus konten, bukan modal utama
-            document.getElementById('modal-content').classList.add('modal-enter', 'modal-enter-active');
-        }
-        
-        function closeModal() {
-            const modalContentDiv = document.getElementById('modal-content');
-            modalContentDiv.classList.remove('modal-enter-active');
-            modalContentDiv.classList.add('modal-leave-active');
-            
-            setTimeout(() => {
-                studentModal.classList.add('hidden');
-                modalContentDiv.classList.remove('modal-leave-active', 'modal-enter');
-            }, 200);
-        }
-        
-        // --- Inisialisasi & Event Listeners ---
-        document.addEventListener('DOMContentLoaded', () => {
-            parseAndProcessData();
-            calculateSummaryAndRenderChart();
-            updateView();
-            
-            searchInput.addEventListener('input', (e) => { filters.searchTerm = e.target.value.toLowerCase(); updateView(); });
-            sortSelect.addEventListener('change', (e) => { filters.sortBy = e.target.value; updateView(); });
-            gradeFiltersContainer.addEventListener('click', (e) => {
-                if (e.target.matches('.grade-filter-btn')) {
-                    filters.grade = e.target.dataset.grade;
-                    document.querySelectorAll('.grade-filter-btn').forEach(btn => btn.classList.remove('filter-btn-active'));
-                    e.target.classList.add('filter-btn-active');
-                    updateView();
-                }
+            requestAnimationFrame(() => {
+                studentModal.classList.add('show');
+                gsap.to(".healthbar-item", { opacity: 1, y: 0, stagger: 0.1, delay: 0.3, ease: "power2.out" });
+                gsap.utils.toArray(".healthbar-item .rounded-sm.h-full").forEach(bar => {
+                    gsap.to(bar, { width: bar.dataset.width, duration: 1.2, ease: "power4.out", delay: 0.5 });
+                });
+                gsap.to(".achievement-item", { opacity: 1, y: 0, delay: 0.8, ease: "power2.out"});
             });
+        }
+
+        function closeModal() {
+            studentModal.classList.remove('show');
+            setTimeout(() => studentModal.classList.add('hidden'), 300);
+        }
+
+        function initGsapBackground() {
+            const canvas = document.getElementById('background-canvas');
+            const ctx = canvas.getContext('2d');
+            let width = window.innerWidth;
+            let height = window.innerHeight;
+            canvas.width = width; canvas.height = height;
+            const shapes = [];
+            const colors = ['#FF2D70', '#00F0FF', '#FFE600'];
+
+            for (let i = 0; i < 20; i++) {
+                const isCandle = Math.random() > 0.5;
+                const isUp = Math.random() > 0.5;
+                shapes.push({
+                    x: Math.random() * width,
+                    y: Math.random() * height,
+                    h: isCandle ? Math.random() * 50 + 20 : 0,
+                    w: isCandle ? 10 : 0,
+                    r: isCandle ? 0 : Math.random() * 3 + 2,
+                    type: isCandle ? 'candle' : 'dot',
+                    color: isCandle ? (isUp ? '#2ecc71' : '#e74c3c') : colors[i % colors.length],
+                    vy: (Math.random() * 0.4 + 0.1) * (Math.random() > 0.5 ? 1 : -1)
+                });
+            }
+
+            function draw() {
+                ctx.clearRect(0, 0, width, height);
+                shapes.forEach(s => {
+                    ctx.fillStyle = s.color + '80';
+                    ctx.strokeStyle = s.color;
+                    ctx.lineWidth = 2;
+                    if (s.type === 'candle') {
+                        ctx.fillRect(s.x, s.y, s.w, s.h);
+                        ctx.beginPath();
+                        ctx.moveTo(s.x + s.w/2, s.y);
+                        ctx.lineTo(s.x + s.w/2, s.y - 10);
+                        ctx.moveTo(s.x + s.w/2, s.y + s.h);
+                        ctx.lineTo(s.x + s.w/2, s.y + s.h + 10);
+                        ctx.stroke();
+                    } else {
+                        ctx.beginPath();
+                        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+
+                    s.y += s.vy;
+                    if (s.y > height + 60) s.y = -60;
+                    if (s.y < -60) s.y = height + 60;
+                });
+            }
+            gsap.ticker.add(draw);
+             window.addEventListener('resize', () => { width = window.innerWidth; height = window.innerHeight; canvas.width = width; canvas.height = height; });
+        }
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            parseData();
+            displayLeaderboard();
+            initGsapBackground();
         });
     </script>
-
 </body>
 </html>
