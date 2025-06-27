@@ -325,7 +325,7 @@ M. Ilham Arifin	2131231966	4.6	4.4	7.8	3	0	92	88	78	60	83	AB`;
             modalContent.innerHTML = `
                 <div class="relative">
                     <div class="w-full h-28 ${getGradeBadgeClasses(student.letterGrade).split(' ')[0].replace('-100', '-200')} rounded-t-2xl"></div>
-                    <div class="absolute top-16 left-1/2 -translate-x-1/2">
+                    <div class="absolute top-8 left-1/2 -translate-x-1/2">
                         <img src="${student.photoUrl}" onerror="this.onerror=null;this.src='https://placehold.co/400x400/EBF4FF/76A9EA?text=${getInitials(student.name)}';" alt="Foto ${student.name}" class="w-28 h-28 rounded-full object-cover border-4 border-gray-100 shadow-lg bg-gray-300">
                     </div>
                 </div>
